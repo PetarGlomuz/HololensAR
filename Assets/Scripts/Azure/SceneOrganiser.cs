@@ -74,7 +74,7 @@ public class SceneOrganiser : MonoBehaviour
     public void StartAction()
     {
         //for test
-        /*_content = LoadPNG("3.jpg");
+        /*_content = LoadPNG("1.jpg");
         if(_content != null)
             StartCoroutine(CustomVisionAnalyser.Instance.AnalyseLastImageCaptured(_content));*/
     }
@@ -104,87 +104,25 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     public void PlaceAnalysisLabel()
     {
-        //lastLabelPlaced = Instantiate(AppearingObj.transform, cursor.transform.position, transform.rotation);
-        lastLabelPlaced = Instantiate(AppearingObj.transform, new Vector3(0,0,0), transform.rotation);
-        lastLabelPlaced.transform.localScale = new Vector3(0f, 0f, 0f);
-
-        /*quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        quadRenderer = quad.GetComponent<Renderer>() as Renderer;
-
-        Material m = new Material(Shader.Find("Legacy Shaders/Transparent/Diffuse"));
-        quadRenderer.material = m;
-        // Here you can set the transparency of the quad. Useful for debugging
-        float transparency = 0f;
-        quadRenderer.material.color = new Color(1, 1, 1, transparency);
-
-        quad.transform.parent = transform;
-        quad.transform.rotation = transform.rotation;
-        // The quad is positioned slightly forward in font of the user
-        quad.transform.localPosition = new Vector3(0.0f, 0.0f, 2.46f);
-
-        // The quad scale as been set with the following value following experimentation,  
-        // to allow the image on the quad to be as precisely imposed to the real world as possible
-        quad.transform.localScale = new Vector3(4.616f, 3.458f, 1f);//new Vector3(5.2f, 3.9f, 1f);
-        quad.transform.parent = null;*/
-
-        lastLabelPlaced.gameObject.SetActive(false);
-        /*try
-        {
-            lastLabelPlaced = Instantiate(label.transform, cursor.transform.position, transform.rotation);
-            lastLabelPlacedText = lastLabelPlaced.GetComponent<TextMesh>();
-            lastLabelPlacedText.text = "";
-            lastLabelPlaced.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
-
-            // Create a GameObject to which the texture can be applied
-            quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            quadRenderer = quad.GetComponent<Renderer>() as Renderer;
-            
-            Material m = new Material(Shader.Find("Legacy Shaders/Transparent/Diffuse"));
-            quadRenderer.material = m;
-            // Here you can set the transparency of the quad. Useful for debugging
-            float transparency = 0f;
-            quadRenderer.material.color = new Color(1, 1, 1, transparency);
-            
-            // Set the position and scale of the quad depending on user position
-            quad.transform.parent = transform;
-            quad.transform.rotation = transform.rotation;
-            // The quad is positioned slightly forward in font of the user
-            quad.transform.localPosition = new Vector3(0.0f, 0.0f, 3.0f);
-            
-            // The quad scale as been set with the following value following experimentation,  
-            // to allow the image on the quad to be as precisely imposed to the real world as possible
-            quad.transform.localScale = new Vector3(3f, 1.65f, 1f);
-            quad.transform.parent = null;
-        }
-        catch(Exception ex)
-        {
-            Debug.Log("PlaceAnalysisLabel exception : " + ex.Message);
-            LogManager.Instance.ShowLogStr("PlaceAnalysisLabel exception : " + ex.Message);
-
-        }*/
     }
 
     /// <summary>
     /// Set the Tags as Text of the last label created. 
     /// </summary>
-    public void FinaliseLabel(string jsonStr/*AnalysisRootObject analysisObject*/)
+    public void FinaliseLabel(string jsonStr)
     {
         if (Global.gDetectingSkipped)
         {
             ImageCapture.Instance.StopImageCapture();
         }
 
-        //for test
-        //PlaceAnalysisLabel();
         try
         {
             var jsonObj = JSON.Parse(jsonStr);
             if (jsonObj["predictions"] != null && jsonObj["predictions"].Count > 0)
             {       
-                //lastLabelPlacedText = lastLabelPlaced.GetComponent<TextMesh>();
-
                 List<Prediction> originalPredictions = new List<Prediction>();
-                //LogManager.Instance.ShowLogStr("Prediction Count : " + jsonObj["predictions"].Count, true);
+
                 for (int i = 0; i < jsonObj["predictions"].Count; i++)
                 {
                     Prediction newPro = new Prediction();
@@ -215,59 +153,33 @@ public class SceneOrganiser : MonoBehaviour
                 Prediction bestPrediction = new Prediction();
 
                 bestPrediction = sortedPredictions[sortedPredictions.Count - 1];
-                //Debug.Log("Best Prediction : " + bestPrediction.probability.ToString());
-                //LogManager.Instance.ShowLogStr("33333333");
-                //LogManager.Instance.ShowLogStr("Best Prediction : " + bestPrediction.probability.ToString(), true);
+                
                 if (bestPrediction.probability > probabilityThreshold)
                 {
                     //quadRenderer = quad.GetComponent<Renderer>() as Renderer;
-                    Bounds quadBounds = new Bounds(new Vector3(0, 0, 0), new Vector3(1, 1, 1));//quadRenderer.bounds; //new Bounds(new Vector3(0, 0, 0), new Vector3(1, 1, 1));//quadRenderer.bounds;
+                    Bounds quadBounds = new Bounds(new Vector3(0, 0, 0), new Vector3(1, 1, 1));
 
-                    // Position the label as close as possible to the Bounding Box of the prediction 
-                    // At this point it will not consider depth
-                    lastLabelPlaced.transform.parent = null;//quad.transform;
-                    lastLabelPlaced.transform.localPosition = CalculateBoundingBoxPosition(quadBounds, bestPrediction.boundingBox);
-                    // Set the tag text
-                    //lastLabelPlacedText.text = bestPrediction.tagName;
-
-                    if (bestPrediction.tagName.Contains("black box"))
+                    if (bestPrediction.tagName.Contains("black box") && !Global.gBlackBoxDetected)
                     {
-                        Debug.Log("----Mobile is detected----");
+                        LogManager.Instance.ShowLogStr("Detect black box, prediction : " + bestPrediction.probability, false);
+                        Global.gBlackBoxDetected = true;
                     }
-                    // Cast a ray from the user's head to the currently placed label, it should hit the object detected by the Service.
-                    // At that point it will reposition the label where the ray HL sensor collides with the object,
-                    // (using the HL spatial tracking)
-                    
-
-                    Vector3 headPosition = Camera.main.transform.position;
-                    RaycastHit objHitInfo;
-                    Vector3 objDirection = lastLabelPlaced.position;
-                    if (Physics.Raycast(headPosition, objDirection, out objHitInfo, 30.0f, SpatialMapping.PhysicsRaycastMask))
+                    else if(bestPrediction.tagName.Contains("bear") && !Global.gBearDetected)
                     {
-                        lastLabelPlaced.position = objHitInfo.point;
+                        LogManager.Instance.ShowLogStr("Detect bear, prediction : " + bestPrediction.probability, false);
+                        Global.gBearDetected = true;
                     }
 
-                    lastLabelPlaced.gameObject.SetActive(true);
+                    transform.GetComponent<MainManager>().OnObjDetected(bestPrediction.tagName);
 
-                    double objWidth = bestPrediction.boundingBox.width;
-                    double objHeight = bestPrediction.boundingBox.height;
-
-                    //4.616f, 3.458f
-
-                    lastLabelPlaced.transform.localScale = new Vector3(1, 1f, 1);
-                    //lastLabelPlaced.transform.localScale = new Vector3(1, 4.616f / 3.458f, 1);
-                    //lastLabelPlaced.Find("Cube").transform.localScale = new Vector3((float)(objWidth / 4), (float)(objHeight / 4), 0.2f);
-
-                    /*if (objWidth > objHeight)
-                        lastLabelPlaced.Find("Plane").transform.localScale = new Vector3((float)(objHeight / 2) / 30, 1, (float)(objHeight / 2) / 30);
+                    if (Global.gBlackBoxDetected && Global.gBearDetected)
+                    {
+                        ImageCapture.Instance.StopImageCapture();
+                    }
                     else
-                        lastLabelPlaced.Find("Plane").transform.localScale = new Vector3((float)(objWidth / 2) / 30, 1, (float)(objWidth / 2) / 30);*/
-
-                    //StartCoroutine("HideCubeObj");
-                    // Stop the analysis process
-
-                    Debug.Log("Repositioning Label : " + bestPrediction.tagName + " , " + bestPrediction.probability);
-                    ImageCapture.Instance.StopImageCapture();
+                    {
+                        ImageCapture.Instance.ResetImageCapture();
+                    }
                 }
                 else
                 {

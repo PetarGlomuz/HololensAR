@@ -16,15 +16,20 @@ public class LogManager : MonoBehaviour
         Instance = this;
     }
 
+    string lastStr = "";
     public void ShowLogStr(string log, bool flag = false)
     {
-        if(flag)
+        if(string.IsNullOrEmpty(lastStr))
             logStr = log;
         else
             logStr += "\r\n" + log;
 
-        //logStr += " : " + System.DateTime.Now.ToString();
-        LogLabel.text = logStr;
+        
+        if (!lastStr.Equals(log))
+        {
+            LogLabel.text = logStr;
+        }
+        lastStr = log;
     }
 
     public void ClearLog()

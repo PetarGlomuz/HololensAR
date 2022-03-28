@@ -76,39 +76,8 @@ public class ImageCapture : MonoBehaviour
         recognizer.StartCapturingGestures();*/
 
         //To do the Azure Detect
-        StartDetectingAction();
-
-        //To pass the Azure Detect
-        //StartCoroutine("WaitAndStopAction");
-        
+        StartDetectingAction();        
     }
-
-    IEnumerator WaitAndStopAction()
-    {
-        LogManager.Instance.ShowLogStr("Detecting..", true);
-        float waiting_time = 0f;
-        while(!Global.gDetectingSkipped && waiting_time < 7f)
-        {
-            waiting_time += 0.1f;
-            yield return new WaitForSeconds(0.1f);
-        }
-        
-        StopImageCapture();
-    }
-
-    /// <summary>
-    /// Respond to Tap Input.
-    /// </summary>
-    /// remove by Van 2022.03.21
-    /*private void TapHandler(TappedEventArgs obj)
-    {
-        if (!Global.gIsDetectingStarted)
-        {
-            Global.gIsDetectingStarted = true;
-            LogManager.Instance.ShowLogStr("Detecting..", true);
-            Invoke("ExecuteImageCaptureAndAnalysis", 0);
-        }
-    }*/
 
     public void StartDetectingAction()
     {
@@ -132,12 +101,6 @@ public class ImageCapture : MonoBehaviour
         
         Resolution cameraResolution = UnityEngine.Windows.WebCam.PhotoCapture.SupportedResolutions.OrderByDescending
             ((res) => res.width * res.height).Last();
-
-        /*LogManager.Instance.ShowLogStr("Screen Resolution count : " + UnityEngine.Windows.WebCam.PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).Count());
-        for(int i = 0; i < UnityEngine.Windows.WebCam.PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).Count(); i++)
-        {
-            LogManager.Instance.ShowLogStr("id : " + i + " Screen Width : " + cameraResolution.width + " , Height : " + cameraResolution.height);
-        }*/
 
         targetTexture = new Texture2D(cameraResolution.width, cameraResolution.height);
         
@@ -230,9 +193,6 @@ public class ImageCapture : MonoBehaviour
 
         // Stop the capture loop if active
         CancelInvoke();
-
-        //LogManager.Instance.ShowLogStr("Press private on to stream the video.", true);
-
         //Show the buttons for Private mode and Video play
         //GameObject.Find("Manager").GetComponent<MainUIManager>().LabelStart.SetActive(false);
         //GameObject.Find("Manager").GetComponent<MainUIManager>().ConnectWnd.SetActive(true);

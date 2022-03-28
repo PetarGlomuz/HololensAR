@@ -43,7 +43,6 @@ public class CustomVisionAnalyser : MonoBehaviour
     public IEnumerator AnalyseLastImageCaptured(Texture2D targetTexture/*string imagePath*/)
     {
         Debug.Log("Analyzing...");
-        //LogManager.Instance.ShowLogStr("222222");
 
         WWWForm webForm = new WWWForm();
 
@@ -81,7 +80,6 @@ public class CustomVisionAnalyser : MonoBehaviour
             string jsonResponse = unityWebRequest.downloadHandler.text;
 
             Debug.Log("response: " + jsonResponse);
-            //LogManager.Instance.ShowLogStr("response: " + jsonResponse, true);
             // The response will be in JSON format, therefore it needs to be deserialized
             AnalysisRootObject analysisRootObject = new AnalysisRootObject();
             try
